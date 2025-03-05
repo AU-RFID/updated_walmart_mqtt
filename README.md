@@ -12,6 +12,8 @@ chmod +x test_cron.sh
 
 
 Terminal
+
+
 wsl
 
 ssh-copy-id aub-rfid-3@192.168.0.30
