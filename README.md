@@ -10,3 +10,15 @@ PYTHONPATH=/usr/lib/python3.8
 chmod +x data_get.py 
 chmod +x test_cron.sh 
 
+
+Terminal
+wsl
+
+ssh-copy-id aub-rfid-3@192.168.0.30
+
+sudo -i
+
+ssh-copy-id aub-rfid-3@192.168.0.30
+
+
+
