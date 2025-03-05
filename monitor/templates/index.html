@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>File Monitor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <h1>Monitoring {{ devices|length }} Device(s)</h1>
+    <div class="datetime" id="dateTime"></div>
+    <!-- WiFi status display -->
+    <div id="wifiStatus" class="status-message"></div>
+    <div class="button-bar">
+      <button id="downloadBtn" class="action-btn">Download Latest</button>
+      <button id="cleanupBtn" class="action-btn">Clean Old Folders</button>
+    </div>
+    <div id="downloadStatus" class="status-message"></div>
+    <div id="cleanupStatus" class="status-message"></div>
+  </header>
+  <div class="devices-grid">
+    {% for dum_id, info in devices.items() %}
+      <div class="device-card" id="card-{{ dum_id }}">
+        <div class="status-indicator {% if info.status %}online{% else %}offline{% endif %}"></div>
+        <div class="device-info">
+          <strong>{{ dum_id }}</strong> <small>({{ info.host }})</small><br>
+          <span class="folder-label">Latest Folder:</span>
+          {% if info.latest_folder %}
+            <span class="folder-value {% if info.fresh_and_complete %}fresh-folder{% else %}old-folder{% endif %}">
+              {{ info.latest_folder }}
+            </span>
+          {% else %}
+            <span class="folder-value">(No folder)</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+  <script>
+    // Update the date/time display every second.
+    function updateDateTime() {
+      const dateTimeEl = document.getElementById("dateTime");
+      dateTimeEl.textContent = new Date().toLocaleString();
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Poll the devices status every 5 seconds.
+    async function refreshStatuses() {
+      try {
+        const res = await fetch("/devices_status");
+        const data = await res.json();
+        for (let [dum_id, info] of Object.entries(data)) {
+          const cardEl = document.getElementById(`card-${dum_id}`);
+          if (!cardEl) continue;
+          const statusIndicator = cardEl.querySelector(".status-indicator");
+          const folderValueEl = cardEl.querySelector(".folder-value");
+          if (info.status) {
+            statusIndicator.classList.remove("offline");
+            statusIndicator.classList.add("online");
+          } else {
+            statusIndicator.classList.remove("online");
+            statusIndicator.classList.add("offline");
+          }
+          if (!info.latest_folder) {
+            folderValueEl.textContent = "(No folder)";
+            folderValueEl.classList.remove("fresh-folder");
+            folderValueEl.classList.add("old-folder");
+          } else {
+            folderValueEl.textContent = info.latest_folder;
+            if (info.fresh_and_complete) {
+              folderValueEl.classList.remove("old-folder");
+              folderValueEl.classList.add("fresh-folder");
+            } else {
+              folderValueEl.classList.remove("fresh-folder");
+              folderValueEl.classList.add("old-folder");
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to refresh statuses:", e);
+      }
+    }
+    setInterval(refreshStatuses, 5000);
+    refreshStatuses();
+
+    // Poll the WiFi status every 5 seconds.
+    async function refreshWifiStatus() {
+      try {
+        const res = await fetch("/wifi_status");
+        const data = await res.json();
+        const wifiStatusEl = document.getElementById("wifiStatus");
+        wifiStatusEl.textContent = data.wifi_status;
+        // Style the text: green if connected, red if not.
+        if (data.wifi_status.includes("Connected")) {
+          wifiStatusEl.style.color = "green";
+        } else {
+          wifiStatusEl.style.color = "red";
+        }
+      } catch (error) {
+        console.error("Error fetching wifi status:", error);
+      }
+    }
+    setInterval(refreshWifiStatus, 5000);
+    refreshWifiStatus();
+
+    // Download Latest button: trigger file retrieval and poll for folder completeness.
+    document.getElementById("downloadBtn").addEventListener("click", async () => {
+      const downloadStatusEl = document.getElementById("downloadStatus");
+      downloadStatusEl.textContent = "Downloading (file retrieval triggered)...";
+      downloadStatusEl.className = "status-message loading";
+      try {
+        const res = await fetch("/download_latest", { method: "POST" });
+        const data = await res.json();
+        if (!data.success) {
+          downloadStatusEl.textContent = "Error: " + data.message;
+          downloadStatusEl.className = "status-message error";
+          return;
+        }
+        // Poll for up to 10 minutes (120 checks every 5 seconds) for folder completeness.
+        let checks = 0;
+        let allGreen = false;
+        while (checks < 120) {
+          await new Promise(r => setTimeout(r, 5000));
+          const res2 = await fetch("/devices_status");
+          const statuses = await res2.json();
+          allGreen = true;
+          for (let info of Object.values(statuses)) {
+            if (!info.fresh_and_complete) {
+              allGreen = false;
+              break;
+            }
+          }
+          if (allGreen) break;
+          checks++;
+        }
+        if (allGreen) {
+          downloadStatusEl.textContent = "All devices have fresh, complete folders (96 files, recent).";
+          downloadStatusEl.className = "status-message success";
+        } else {
+          downloadStatusEl.textContent = "Not all devices are fresh/complete after waiting.";
+          downloadStatusEl.className = "status-message error";
+        }
+      } catch (error) {
+        downloadStatusEl.textContent = "Request failed: " + error;
+        downloadStatusEl.className = "status-message error";
+      }
+    });
+
+    // Cleanup button: trigger cleanup.
+    document.getElementById("cleanupBtn").addEventListener("click", async () => {
+      const cleanupStatusEl = document.getElementById("cleanupStatus");
+      cleanupStatusEl.textContent = "Cleaning old folders on online devices...";
+      cleanupStatusEl.className = "status-message loading";
+      try {
+        const res = await fetch("/cleanup_old_folders", { method: "POST" });
+        const data = await res.json();
+        if (data.overall_success) {
+          cleanupStatusEl.textContent = "Cleanup successful on all online devices.";
+          cleanupStatusEl.className = "status-message success";
+        } else {
+          let msg = "Some cleanups failed or were skipped:\n";
+          for (const [dum_id, result] of Object.entries(data.results)) {
+            if (!result.success) {
+              msg += `- ${dum_id}: ${result.error}\n`;
+            }
+          }
+          cleanupStatusEl.textContent = msg;
+          cleanupStatusEl.className = "status-message error";
+        }
+      } catch (error) {
+        cleanupStatusEl.textContent = "Cleanup request failed: " + error;
+        cleanupStatusEl.className = "status-message error";
+      }
+    });
+  </script>
+</body>
+</html>

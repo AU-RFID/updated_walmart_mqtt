@@ -1,0 +1,175 @@
+/* Basic reset and layout */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f0f0f0;
+  color: #333;
+  padding: 20px;
+}
+
+/* Header styling */
+header {
+  background: #003366;
+  color: #fff;
+  padding: 1.5em 1em;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: 1.8em;
+  margin-bottom: 0.3em;
+}
+
+.datetime {
+  font-size: 1em;
+  opacity: 0.85;
+  margin-bottom: 1em;
+}
+
+/* WiFi status message (inherits status-message styles) */
+#wifiStatus {
+  margin: 0.5em auto;
+  padding: 0.8em 1em;
+  border-radius: 6px;
+  white-space: pre-line;
+  text-align: center;
+  border: 2px solid #999;
+}
+
+/* Button bar & buttons */
+.button-bar {
+  margin: 1em 0;
+}
+
+.action-btn {
+  margin: 0 0.5em;
+  padding: 0.6em 1em;
+  font-size: 1em;
+  cursor: pointer;
+  background: #006699;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.action-btn:hover {
+  background: #005f7f;
+}
+
+/* Status messages */
+.status-message {
+  max-width: 80%;
+  margin: 0.5em auto;
+  padding: 0.8em 1em;
+  border-radius: 6px;
+  white-space: pre-line;
+  text-align: left;
+  background: #e0e0e0;
+  color: #333;
+  border: 2px solid #999;
+}
+
+.status-message.loading {
+  background: #e0e0e0;
+  color: #333;
+  position: relative;
+}
+.status-message.loading::before {
+  content: "";
+  width: 1em;
+  height: 1em;
+  border: 3px solid #999;
+  border-top: 3px solid transparent;
+  border-radius: 50%;
+  display: inline-block;
+  position: absolute;
+  left: 1em;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+.status-message.success {
+  background: #e0ffe0;
+  color: #077507;
+  border-color: #0a0;
+}
+
+.status-message.error {
+  background: #ffe0e0;
+  color: #a00;
+  border-color: #a00;
+}
+
+/* Devices grid & cards */
+.devices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1em;
+  padding: 1em;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.device-card {
+  background: #fff;
+  border-radius: 6px;
+  padding: 1em;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Status indicator styling */
+.status-indicator {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  margin-right: 1em;
+  flex-shrink: 0;
+  border: 2px solid transparent;
+}
+
+.status-indicator.online {
+  background: rgba(0, 200, 0, 0.6);
+  border-color: #0a0;
+}
+
+.status-indicator.offline {
+  background: rgba(255, 0, 0, 0.6);
+  border-color: #a00;
+}
+
+/* Device info and folder label */
+.device-info {
+  flex-grow: 1;
+  line-height: 1.4em;
+}
+
+.folder-label {
+  font-weight: bold;
+}
+
+/* Folder value styling */
+.folder-value {
+  margin-left: 0.4em;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+}
+
+.fresh-folder {
+  background-color: rgba(144, 238, 144, 0.5);
+}
+
+.old-folder {
+  background-color: rgba(255, 192, 192, 0.6);
+}
