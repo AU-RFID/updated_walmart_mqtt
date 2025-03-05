@@ -1,0 +1,49 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  
+  h1 {
+    margin-bottom: 20px;
+  }
+  
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  .devices-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .device-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .status-box {
+    width: 20px;
+    height: 20px;
+    border: 1px solid #000;
+  }
+  
+  .status-box.red {
+    background-color: red;
+  }
+  
+  .status-box.green {
+    background-color: green;
+  }
+  
+  .info-box {
+    border: 1px solid #ccc;
+    background: #f3f3f3;
+    padding: 8px;
+    min-width: 250px;
+  }
+  

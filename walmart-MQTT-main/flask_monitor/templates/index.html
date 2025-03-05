@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>File Monitor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>Monitoring {{ devices|length }} Device(s)</h1>
+
+  <!-- Manual download trigger -->
+  <button id="downloadBtn">Download Latest</button>
+  <p id="downloadStatus" style="font-weight: bold;"></p>
+
+  <!-- Devices container -->
+  <div class="devices-grid">
+    {% for dum_id, info in devices.items() %}
+      <div class="device-row" id="row-{{ dum_id }}">
+        <div class="status-box {{ 'green' if info.status else 'red' }}"></div>
+        <div class="info-box">
+          <strong>{{ dum_id }}</strong> ({{ info.host }})<br>
+          Latest File:
+          {% if info.latest_file %}
+            {{ info.latest_file }}
+          {% else %}
+            (No file)
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <script>
+    async function refreshStatuses() {
+      try {
+        const res = await fetch("/devices_status");
+        const data = await res.json();
+        for (let [dum_id, info] of Object.entries(data)) {
+          const rowEl = document.getElementById(`row-${dum_id}`);
+          if (!rowEl) continue;
+          const statusBox = rowEl.querySelector(".status-box");
+          const infoBox = rowEl.querySelector(".info-box");
+          if (info.status) {
+            statusBox.classList.remove("red");
+            statusBox.classList.add("green");
+          } else {
+            statusBox.classList.remove("green");
+            statusBox.classList.add("red");
+          }
+          infoBox.innerHTML = `
+            <strong>${dum_id}</strong> (${info.host})<br>
+            Latest File: ${info.latest_file || '(No file)'}
+          `;
+        }
+      } catch (e) {
+        console.error("Failed to refresh statuses:", e);
+      }
+    }
+
+    // Refresh statuses every 5 seconds
+    setInterval(refreshStatuses, 5000);
+    refreshStatuses();
+
+    // Manual retrieval
+    document.getElementById("downloadBtn").addEventListener("click", async () => {
+      document.getElementById("downloadStatus").textContent = "Initiating retrieval...";
+      try {
+        const res = await fetch("/download_latest", { method: "POST" });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById("downloadStatus").textContent = data.message;
+        } else {
+          document.getElementById("downloadStatus").textContent = "Error: " + data.message;
+        }
+      } catch (error) {
+        document.getElementById("downloadStatus").textContent = "Request failed: " + error;
+      }
+    });
+  </script>
+</body>
+</html>

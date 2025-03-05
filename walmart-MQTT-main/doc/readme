@@ -1,0 +1,1 @@
+docker run -it -p 18083:18083 -p 18084:18084 -p 1883:1883 -p 8883:8883 -p 8083:8083 -p 8084:8084 -v /mosquitto/config/mosquitto.conf -v /mosquitto/certs -v /mosquitto/data -v /mosquitto/log eclipse-mosquitto
